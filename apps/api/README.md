@@ -1,0 +1,15 @@
+# @assistant/api
+
+Local typed Node HTTP backend. Start from the repository root with `pnpm dev:api`; it builds the backend and opens a listener at `127.0.0.1:3000`. Visit `/setup` to choose a provider/model, enter its API key and obtain the profile-scoped pairing code used by the extension.
+
+Supports OpenAI Responses, Gemini generateContent and Anthropic Messages through native fetch. Model IDs must be supported by the selected account/API; incompatible models return a bounded error. No model is contacted until an operator runs the connection test or requests/opts into suggestions.
+
+Keys are used only through backend process environment variables. Setup offers **Remember connection on this PC** (selected initially when available) or session-only storage. Remember writes the key, provider/model, profile ID and stable pairing to the private backend `.env.connections` environment file at the repository root; no customer text or business facts are saved there. The file is ignored by Git, not encrypted, and must stay private. Removing the connection persistently revokes its saved pairing. Session-only credentials expire on restart. The extension receives only a revocable pairing capability.
+
+The production entry point provides a fixed connection-file path; embedded/test `createBackend()` instances remain session-only unless given a `connectionFile` path. File load validates bounded, unique, strict entries before importing keys; malformed files stop startup with a bounded error. Atomic save failures retain the active connection and never report successful persistence. Windows permissions allow the current user and SYSTEM; other platforms create files with mode 0600. Encoding only escapes environment-file values; it is not encryption. Optional `.env` startup loading supports LLM_PROVIDER, LLM_MODEL, LLM_API_KEY and ASSISTANT_PROFILE_ID on first use, before any saved connection file exists; subsequently the saved connections are authoritative, including deletion. The server always binds loopback. Changing API_PORT also requires changing the extension's fixed origin and host grant.
+
+Setup writes require a same-origin HttpOnly session cookie and CSRF token. Extension API calls require profile ownership and a pairing token; customer payloads cannot replace the server-owned profile. Host/Origin checks, strict schemas, body/response bounds, rate limits, timeouts and redirect rejection apply. The local personal tool is not a hosted multi-user service.
+
+Endpoints: GET `/health`, `/setup`, `/setup/state`; POST `/setup/configure`, `/setup/test`, `/setup/clear`; authenticated GET `/api/status`, POST `/api/profiles`, `/api/assist`. No raw request or provider error-body logging is enabled. Business profiles/replies remain volatile; the authenticated extension resyncs the profile for generation after restart. No customer-data repository is introduced.
+
+Tests use real loopback HTTP with an injected fake provider and separately test outbound request formatting with fake fetch. See `docs/TESTING.md` for limits and the release report for verification.

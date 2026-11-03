@@ -1,0 +1,17 @@
+# Testing
+
+`pnpm check` runs formatting, ESLint, strict production/test/tool/setup types, Vitest, builds and Playwright. Run individual commands when diagnosing failures. Builds verify exact manifest grants, standalone bundled content code, strict CSP, generated setup script and absence of fixture origins from production output.
+
+The current suite covers contracts, settings/revisions/trusted routing, React settings, adapter startup/chat-switch hydration, outgoing/prepended/duplicate history, ordered selector fallback, strong identity and safe insertion. Controller tests cover consent, duplicate delivery after worker recreation, stale response rejection, disconnect and pending-response preservation across diagnostics refreshes.
+
+Core tests include 60 deterministic cases across English, Kannada, Telugu, Tamil and Hindi, plus injection separation, exact numeric boundaries, nonfactual greetings and working-hour gates. These exercise post-generation policy with synthetic outputs; they are not 60 paid/live LLM quality evaluations. Semantic paraphrases, factual consistency and multilingual claims still require human review.
+
+Backend tests exercise actual loopback HTTP with injected generation: cookie/CSRF/Origin/Host, pairing ownership, server-owned profiles, size/rate limits, error redaction, key storage/revocation, unknown-fact fallback and secret-echo prevention. Fake fetch tests verify provider request shape and bounded failures without vendor traffic.
+
+Restart tests use temporary backend environment files and fake keys. They recreate the HTTP service with the same saved file, re-use the original pairing, re-sync the profile and generate using the restored credential. They verify remembered model changes, cross-business rejection, session-only mode, durable removal, save-failure rollback, bounded/corrupt/duplicate/extra-field files, capacity and absence of raw customer/business data in the decoded saved content. The live Chromium workflow also restarts the actual backend service between automatic replies without re-entering a key or reconnecting the extension. These tests do not use the operator's environment file or credentials.
+
+Two isolated Chromium workflows load actual built MV3 extensions. One covers shell settings and fictional sample persistence. The other uses a local synthetic WhatsApp DOM and injected backend provider to cover model-key setup, delayed setup readiness, pairing/consent, saved instructions in the prompt, incoming-only generation, editable reply insertion, zero send-button actions, duplicate/history/chat-switch guards, narrow layout and absence of keys/raw customer text in extension storage. Test keys are fictional. Screenshots are under ignored `artifacts/milestone-1` and `artifacts/whatsapp-ai`.
+
+Install Chromium with `pnpm exec playwright install chromium` (Linux: add --with-deps). CI runs Windows/Linux with frozen dependencies and normal Playwright-managed Chromium. On Windows the verified CFT executable at `.browser-cache/chrome-win64/chrome.exe` is used when present; CHROMIUM_EXECUTABLE_PATH can override it. Tests use temporary profiles, never personal sessions.
+
+Not established: live WhatsApp DOM compatibility, paid vendor credentials/model behavior, actual Chrome side-panel opening (pages are exercised as tabs), full accessibility audit, Sheets retrieval, ticket/notification delivery, durable alarm recovery, hosted tenant isolation or production release security. See the manual plan before real-account use.
