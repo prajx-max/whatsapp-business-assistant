@@ -159,7 +159,7 @@ flowchart TD
         SendEvent --> GateCheck{"Gate Checks:<br/>Active Tab?<br/>Reply Mode Enabled?<br/>Not Paused / Hours OK?<br/>Outside Cooldown?"}
         GateCheck -- Passed --> CheckMode{"Reply Mode?"}
         GateCheck -- Blocked --> BlockedLog["Log Reason / Cancel"]
-        
+
         CheckMode -- "Draft Only (Default)" --> ReqDraft["Request AI Draft"]
         CheckMode -- "Auto-Reply Web (Opted-in)" --> ReqAuto["Request AI Suggestion"]
     end
@@ -177,16 +177,16 @@ flowchart TD
         ReturnResp --> CheckNeedsHuman{"Model Demands<br/>Human Support?"}
         CheckNeedsHuman -- Yes (Auto-Reply) --> SafeFallback["Apply Localized Safe Fallback"]
         CheckNeedsHuman -- No / Draft --> UseReply["Use Generated Reply"]
-        
+
         UseReply --> DeliveryBranch{"Mode Execution"}
         SafeFallback --> DeliveryBranch
-        
+
         DeliveryBranch -- Draft Only --> WorkspaceUI["Display Editable Draft in Side Panel"]
         WorkspaceUI --> OperatorReview["Operator Manual Review & Edit"]
         OperatorReview --> OperatorInsert["Operator Clicks 'Insert'"]
         OperatorInsert --> PopulateComposer["Insert Text into Empty Composer"]
         PopulateComposer --> OperatorSend["Operator Clicks Send Manually"]
-        
+
         DeliveryBranch -- Auto-Reply Web --> JournalReserve["Reserve Delivery in Journal<br/>(ATTEMPTING)"]
         JournalReserve --> ContentVerify["Adapter Pre-Send Checks:<br/>Unchanged Source & Empty Composer"]
         ContentVerify --> WorkerFinalAuth["Request Final Worker Authorization"]
@@ -216,13 +216,13 @@ flowchart TB
 
         subgraph ExtensionContext["Chrome Manifest V3 Extension (@assistant/extension)"]
             SW["Service Worker (service-worker.js)<br/>- Lifecycle & worker recovery (ADAPTER_RESUME)<br/>- LiveController queue & cooldown engine<br/>- DeliveryJournal duplicate protection<br/>- In-memory ephemeral message state"]
-            
+
             subgraph ExtensionUI["Extension UI (React 19)"]
                 SP["Side Panel (Live Workspace)"]
                 Pop["Popup (Quick Status)"]
                 Opt["Options (Business Settings & Diagnostics)"]
             end
-            
+
             LocalStorage[("chrome.storage.local<br/>- Business Settings<br/>- Pairing Capability<br/>- Salt & Delivery Journal<br/>- Per-Chat Pauses")]
         end
 
@@ -237,10 +237,10 @@ flowchart TB
             SetupUI["Setup Interface (/setup)<br/>- SameSite=Strict HttpOnly Session"]
             ConfigStore["Configuration Store<br/>- Profile-scoped pairing tokens<br/>- Process environment keys"]
             EnvFile[(".env.connections (Optional)<br/>- Local unencrypted config file<br/>- Restricted OS ACLs (0600 / icacls)")]
-            
+
             CoreRules["@assistant/core Logic<br/>- Prompt isolation & formatting<br/>- Exact numeric & token validation<br/>- Working hours & multilingual fallback"]
         end
-        
+
         HTTPServer <--> ConfigStore
         SetupUI <--> HTTPServer
         ConfigStore <--> EnvFile
@@ -259,14 +259,14 @@ flowchart TB
 
 ### Component Breakdown & Boundaries
 
-| Component | Package / Path | Role & Operational Boundary |
-| :--- | :--- | :--- |
-| **Content Script Adapter** | `apps/extension/src/content/` | Thin DOM observer injected into WhatsApp Web. Detects incoming messages, extracts display text, classifies direction via public data IDs and bubble background themes, inserts approved drafts, and executes native click actions when authorized. |
-| **Service Worker** | `apps/extension/src/background/` | Central coordinator. Manages active tab state, evaluates working hours and duplicate windows, sequences in-memory queues, persists the `DeliveryJournal`, handles worker recovery (`ADAPTER_RESUME`), and communicates with the backend. |
-| **Extension UI** | `apps/extension/src/{sidepanel,options,popup}/` | React 19 interface providing the live reply workspace (side panel), quick status view (popup), and business profile settings with DOM diagnostics (options). |
-| **Local API Server** | `apps/api/src/` | Lightweight Node.js service binding strictly to `127.0.0.1:3000`. Manages the `/setup` web interface, validates profile pairing tokens, loads LLM keys into process memory, and executes outbound HTTPS requests to AI providers. |
-| **Core Assistant Rules** | `packages/core/src/` | Pure business logic: prompt assembly with untrusted customer text separation, exact numeric/token grounding checks, language detection, and localized safe fallbacks. Contains zero DOM or browser dependencies. |
-| **Contracts & Schemas** | `packages/contracts/src/` | Shared Zod schemas and inferred TypeScript types defining all API payloads, extension events, entity definitions, and runtime validation rules. |
+| Component                  | Package / Path                                  | Role & Operational Boundary                                                                                                                                                                                                                        |
+| :------------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Content Script Adapter** | `apps/extension/src/content/`                   | Thin DOM observer injected into WhatsApp Web. Detects incoming messages, extracts display text, classifies direction via public data IDs and bubble background themes, inserts approved drafts, and executes native click actions when authorized. |
+| **Service Worker**         | `apps/extension/src/background/`                | Central coordinator. Manages active tab state, evaluates working hours and duplicate windows, sequences in-memory queues, persists the `DeliveryJournal`, handles worker recovery (`ADAPTER_RESUME`), and communicates with the backend.           |
+| **Extension UI**           | `apps/extension/src/{sidepanel,options,popup}/` | React 19 interface providing the live reply workspace (side panel), quick status view (popup), and business profile settings with DOM diagnostics (options).                                                                                       |
+| **Local API Server**       | `apps/api/src/`                                 | Lightweight Node.js service binding strictly to `127.0.0.1:3000`. Manages the `/setup` web interface, validates profile pairing tokens, loads LLM keys into process memory, and executes outbound HTTPS requests to AI providers.                  |
+| **Core Assistant Rules**   | `packages/core/src/`                            | Pure business logic: prompt assembly with untrusted customer text separation, exact numeric/token grounding checks, language detection, and localized safe fallbacks. Contains zero DOM or browser dependencies.                                   |
+| **Contracts & Schemas**    | `packages/contracts/src/`                       | Shared Zod schemas and inferred TypeScript types defining all API payloads, extension events, entity definitions, and runtime validation rules.                                                                                                    |
 
 ---
 
@@ -274,19 +274,19 @@ flowchart TB
 
 The project relies on a modern, strictly typed TypeScript toolchain without unnecessary heavyweight frameworks:
 
-| Layer | Technology | Version | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) | `6.0.3` | End-to-end strict type safety across packages and applications |
-| **Runtime** | [Node.js](https://nodejs.org/) | `>=24.0.0 <25` (Pinned `24.22.1`) | Native HTTP server, environment management, and ESM execution |
-| **Package Manager** | [pnpm](https://pnpm.io/) | `>=11.25.0 <12` (Pinned `11.25.0`) | Monorepo dependency management and local package isolation |
-| **Browser Extension** | Chrome Extensions MV3 | Manifest V3 | Browser integration via `storage`, `sidePanel`, and `scripting` |
-| **Frontend UI** | [React](https://react.dev/) | `19.3.1` | Declarative UI for Side Panel, Popup, and Options interfaces |
-| **Build Tooling** | [Vite](https://vite.dev/) | `8.3.5` | High-performance bundling for extension pages and content scripts |
-| **Validation** | [Zod](https://zod.dev/) | `4.6.7` | Runtime contract enforcement, event schemas, and input validation |
-| **Unit Testing** | [Vitest](https://vitest.dev/) | `5.0.5` | Fast unit and integration testing across core logic and backend |
-| **DOM Testing** | [Testing Library](https://testing-library.com/) / [jsdom](https://github.com/jsdom/jsdom) | `16.3.3` / `30.1.3` | React component testing and browser environment simulation |
-| **E2E Testing** | [Playwright](https://playwright.dev/) | `1.64.1` | Headless/headed Chromium browser automation for unpacked extensions |
-| **Code Quality** | [ESLint](https://eslint.org/) / [Prettier](https://prettier.io/) | `10.13.0` / `3.9.10` | Static code analysis, security linting, and automated formatting |
+| Layer                 | Technology                                                                                | Version                            | Purpose                                                             |
+| :-------------------- | :---------------------------------------------------------------------------------------- | :--------------------------------- | :------------------------------------------------------------------ |
+| **Language**          | [TypeScript](https://www.typescriptlang.org/)                                             | `6.0.3`                            | End-to-end strict type safety across packages and applications      |
+| **Runtime**           | [Node.js](https://nodejs.org/)                                                            | `>=24.0.0 <25` (Pinned `24.22.1`)  | Native HTTP server, environment management, and ESM execution       |
+| **Package Manager**   | [pnpm](https://pnpm.io/)                                                                  | `>=11.25.0 <12` (Pinned `11.25.0`) | Monorepo dependency management and local package isolation          |
+| **Browser Extension** | Chrome Extensions MV3                                                                     | Manifest V3                        | Browser integration via `storage`, `sidePanel`, and `scripting`     |
+| **Frontend UI**       | [React](https://react.dev/)                                                               | `19.3.1`                           | Declarative UI for Side Panel, Popup, and Options interfaces        |
+| **Build Tooling**     | [Vite](https://vite.dev/)                                                                 | `8.3.5`                            | High-performance bundling for extension pages and content scripts   |
+| **Validation**        | [Zod](https://zod.dev/)                                                                   | `4.6.7`                            | Runtime contract enforcement, event schemas, and input validation   |
+| **Unit Testing**      | [Vitest](https://vitest.dev/)                                                             | `5.0.5`                            | Fast unit and integration testing across core logic and backend     |
+| **DOM Testing**       | [Testing Library](https://testing-library.com/) / [jsdom](https://github.com/jsdom/jsdom) | `16.3.3` / `30.1.3`                | React component testing and browser environment simulation          |
+| **E2E Testing**       | [Playwright](https://playwright.dev/)                                                     | `1.64.1`                           | Headless/headed Chromium browser automation for unpacked extensions |
+| **Code Quality**      | [ESLint](https://eslint.org/) / [Prettier](https://prettier.io/)                          | `10.13.0` / `3.9.10`               | Static code analysis, security linting, and automated formatting    |
 
 ---
 
@@ -334,15 +334,15 @@ whatsapp-business-assistant/
 <details>
 <summary><strong>Workspace Package Responsibilities</strong></summary>
 
-| Package | Purpose & Boundary Constraints |
-| :--- | :--- |
-| `@assistant/contracts` | Canonical Zod validation schemas, TypeScript contracts, and event definitions. Depends only on Zod. |
-| `@assistant/core` | Pure deterministic business logic: prompt building, grounding validation, multilingual safe fallbacks, and working hours calculation. Zero browser or transport dependencies. |
-| `@assistant/knowledge` | Knowledge base interfaces, schema mappings, and retrieval cache contracts. |
-| `@assistant/ui` | Shared UI component primitives and design tokens used across extension views. |
-| `@assistant/test-fixtures` | Synthetic WhatsApp DOM trees, mock business profiles, and deterministic test fixtures. |
-| `@assistant/api` | Native Node.js HTTP server (port 3000) managing `/setup`, credential loading into process memory, and outbound LLM fetch requests. |
-| `@assistant/extension` | Chrome Manifest V3 extension containing the DOM content adapter, service worker controller, React 19 UI, and persistent delivery journal. |
+| Package                    | Purpose & Boundary Constraints                                                                                                                                                |
+| :------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@assistant/contracts`     | Canonical Zod validation schemas, TypeScript contracts, and event definitions. Depends only on Zod.                                                                           |
+| `@assistant/core`          | Pure deterministic business logic: prompt building, grounding validation, multilingual safe fallbacks, and working hours calculation. Zero browser or transport dependencies. |
+| `@assistant/knowledge`     | Knowledge base interfaces, schema mappings, and retrieval cache contracts.                                                                                                    |
+| `@assistant/ui`            | Shared UI component primitives and design tokens used across extension views.                                                                                                 |
+| `@assistant/test-fixtures` | Synthetic WhatsApp DOM trees, mock business profiles, and deterministic test fixtures.                                                                                        |
+| `@assistant/api`           | Native Node.js HTTP server (port 3000) managing `/setup`, credential loading into process memory, and outbound LLM fetch requests.                                            |
+| `@assistant/extension`     | Chrome Manifest V3 extension containing the DOM content adapter, service worker controller, React 19 UI, and persistent delivery journal.                                     |
 
 </details>
 
@@ -439,7 +439,7 @@ The local server will start on `http://127.0.0.1:3000`. Keep this terminal windo
 3. Select your **AI Provider** (`openai`, `gemini`, or `anthropic`).
 4. Enter your chosen **Model ID** (e.g., `gpt-4o`, `gemini-1.5-flash`, or `claude-3-5-sonnet-20241022`).
 5. Enter your **API Key**.
-6. *(Recommended)* Check **Remember connection on this PC** if you want your configuration to survive backend restarts.
+6. _(Recommended)_ Check **Remember connection on this PC** if you want your configuration to survive backend restarts.
 7. Click **Save Configuration**.
 8. Once saved, copy the generated **Pairing Code**.
 
@@ -462,30 +462,31 @@ The local server will start on `http://127.0.0.1:3000`. Keep this terminal windo
 Extension Settings > Reply Preferences
 ```
 
-| Setting | Default | Description |
-| :--- | :--- | :--- |
-| **Reply Mode** | `Draft Only` | Choose between `Draft Only`, `Auto-reply`, or `Off`. |
-| **Allow automatic sending without review** | `Disabled` (Unchecked) | **Mandatory consent checkbox** required before `Auto-reply` can be activated. |
-| **Working Hours** | Mon–Sun schedules | Define opening and closing hours. Configure outside-hours action (`NO_REPLY` or `DRAFT`). |
-| **Minimum time between replies** | `10 seconds` | Per-chat cooldown period preventing rapid successive automated replies to the same contact. |
-| **Duplicate window** | `30 seconds` | Time window within which identical message events are deduplicated and ignored. |
+| Setting                                    | Default                | Description                                                                                 |
+| :----------------------------------------- | :--------------------- | :------------------------------------------------------------------------------------------ |
+| **Reply Mode**                             | `Draft Only`           | Choose between `Draft Only`, `Auto-reply`, or `Off`.                                        |
+| **Allow automatic sending without review** | `Disabled` (Unchecked) | **Mandatory consent checkbox** required before `Auto-reply` can be activated.               |
+| **Working Hours**                          | Mon–Sun schedules      | Define opening and closing hours. Configure outside-hours action (`NO_REPLY` or `DRAFT`).   |
+| **Minimum time between replies**           | `10 seconds`           | Per-chat cooldown period preventing rapid successive automated replies to the same contact. |
+| **Duplicate window**                       | `30 seconds`           | Time window within which identical message events are deduplicated and ignored.             |
 
 ### Draft Only vs. Auto-Reply Comparison
 
-| Operational Aspect | Draft Only (Default) | Auto-Reply (`AUTO_REPLY_WEB`) |
-| :--- | :--- | :--- |
-| **Operator Consent** | Default setting; no extra consent needed | Requires explicit checkbox acknowledgement |
-| **Response Generation** | Automatic upon new incoming message | Automatic upon new incoming message |
-| **Review Gate** | **Mandatory human review** in Side Panel | **Unattended**; bypasses human review for eligible messages |
-| **Composer Action** | Operator clicks "Insert" | Automatically populated if composer was empty |
-| **Send Trigger** | **Manual**: Operator clicks native WhatsApp send | **Automated**: Extension simulates click on native send |
-| **Human Handoff Behavior** | Leaves draft marked for review | Sends localized safe fallback message |
-| **Recommended Use Case** | Daily customer care, custom quotes, complex queries | Standard FAQs, off-peak coverage, straightforward inquiries |
+| Operational Aspect         | Draft Only (Default)                                | Auto-Reply (`AUTO_REPLY_WEB`)                               |
+| :------------------------- | :-------------------------------------------------- | :---------------------------------------------------------- |
+| **Operator Consent**       | Default setting; no extra consent needed            | Requires explicit checkbox acknowledgement                  |
+| **Response Generation**    | Automatic upon new incoming message                 | Automatic upon new incoming message                         |
+| **Review Gate**            | **Mandatory human review** in Side Panel            | **Unattended**; bypasses human review for eligible messages |
+| **Composer Action**        | Operator clicks "Insert"                            | Automatically populated if composer was empty               |
+| **Send Trigger**           | **Manual**: Operator clicks native WhatsApp send    | **Automated**: Extension simulates click on native send     |
+| **Human Handoff Behavior** | Leaves draft marked for review                      | Sends localized safe fallback message                       |
+| **Recommended Use Case**   | Daily customer care, custom quotes, complex queries | Standard FAQs, off-peak coverage, straightforward inquiries |
 
 <details>
 <summary><strong>Advanced Configuration: Persistent Connections (.env.connections)</strong></summary>
 
 When checking **Remember connection on this PC** in the `/setup` interface:
+
 - **Format**: Stored at the repository root as `.env.connections` (Git-ignored) containing a versioned, base64url-encoded JSON array of saved connections.
 - **Payload**: Contains only `{ profileId, provider, model, apiKey, token }`. Never stores customer messages, chat text, or model replies.
 - **Filesystem Permissions**: Automatically secured on creation:
@@ -541,15 +542,15 @@ The codebase maintains an extensive test suite verifying contract integrity, ada
 
 ### Available Test Commands
 
-| Command | Description | Test Scope |
-| :--- | :--- | :--- |
-| `pnpm test` | Runs Vitest unit & integration test suites | Contracts, core rules, settings, adapter, delivery journal, and backend |
-| `pnpm test:e2e` | Runs Playwright end-to-end browser tests | Real unpacked Chrome extension in automated Chromium instance |
-| `pnpm check` | **Complete verification suite** | Runs `format:check`, `lint`, `typecheck`, `test`, `build`, and `test:e2e` |
-| `pnpm lint` | Runs ESLint | Enforces strict TypeScript rules and code style across all packages |
-| `pnpm typecheck` | Runs TypeScript project compiler (`tsc`) | Verifies strict types across production, tests, and build tooling |
-| `pnpm format` | Runs Prettier write | Formats all project files automatically |
-| `pnpm format:check` | Runs Prettier check | Verifies consistent codebase formatting |
+| Command             | Description                                | Test Scope                                                                |
+| :------------------ | :----------------------------------------- | :------------------------------------------------------------------------ |
+| `pnpm test`         | Runs Vitest unit & integration test suites | Contracts, core rules, settings, adapter, delivery journal, and backend   |
+| `pnpm test:e2e`     | Runs Playwright end-to-end browser tests   | Real unpacked Chrome extension in automated Chromium instance             |
+| `pnpm check`        | **Complete verification suite**            | Runs `format:check`, `lint`, `typecheck`, `test`, `build`, and `test:e2e` |
+| `pnpm lint`         | Runs ESLint                                | Enforces strict TypeScript rules and code style across all packages       |
+| `pnpm typecheck`    | Runs TypeScript project compiler (`tsc`)   | Verifies strict types across production, tests, and build tooling         |
+| `pnpm format`       | Runs Prettier write                        | Formats all project files automatically                                   |
+| `pnpm format:check` | Runs Prettier check                        | Verifies consistent codebase formatting                                   |
 
 ### Test Suite Structure
 
@@ -633,7 +634,8 @@ Contributions, bug reports, and suggestions are welcome! To contribute:
    pnpm check
    ```
 
-   *All checks (formatting, linting, type checks, unit tests, builds, and E2E tests) must pass.*
+   _All checks (formatting, linting, type checks, unit tests, builds, and E2E tests) must pass._
+
 5. **Submit a Pull Request**: Provide a detailed description of your changes, referencing relevant issue tickets.
 
 Please review the documentation in the `docs/` directory before proposing major architectural modifications.
